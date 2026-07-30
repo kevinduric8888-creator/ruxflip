@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y \
 # Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
-# Postavi čistu Apache konfiguraciju s otvorenim dozvolama za /public
+# Postavi Apache da gleda izravno u root (/var/www/html) uz pune dozvole
 RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html/public\n\
-    <Directory /var/www/html/public>\n\
+    DocumentRoot /var/www/html\n\
+    <Directory /var/www/html>\n\
         Options -Indexes +FollowSymLinks\n\
         AllowOverride All\n\
         Require all granted\n\
@@ -30,8 +30,8 @@ COPY . .
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instaliraj sve Composer ovisnosti u korijensku mapu (stvara vendor mapu)
-RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
+# Instaliraj sve Composer ovisnosti ako postoji composer.json
+RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true
 
 # Postavi prave dozvole nad svim datotekama
 RUN chown -R www-data:www-data /var/www/html
