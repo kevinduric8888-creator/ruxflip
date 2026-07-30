@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y \
 # Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
-# Postavi DocumentRoot na /var/www/html/public i dodaj 'Require all granted' unutar VirtualHosta
+# Postavi Apache direktno na /var/www/html uz pune dozvole pristupa
 RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html/public\n\
-    <Directory /var/www/html/public>\n\
+    DocumentRoot /var/www/html\n\
+    <Directory /var/www/html>\n\
         Options Indexes FollowSymLinks\n\
         AllowOverride All\n\
         Require all granted\n\
