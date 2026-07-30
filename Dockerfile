@@ -19,11 +19,18 @@ WORKDIR /var/www/html
 # 4. Kopiraj projekt
 COPY . .
 
-# 5. Instalacija Composer ovisnosti
+# 5. Stvori potrebne mape ako ne postoje
+RUN mkdir -p /var/www/html/bootstrap/cache \
+             /var/www/html/storage/framework/views \
+             /var/www/html/storage/framework/cache \
+             /var/www/html/storage/framework/sessions \
+             /var/www/html/storage/logs
+
+# 6. Instalacija Composer ovisnosti
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# 6. Permisije za Laravel storage i cache
+# 7. Permisije za Laravel storage i cache
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
