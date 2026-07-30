@@ -26,7 +26,11 @@ RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/logs \
              /var/www/html/resources/views
 
-# 5. Postavi dozvole
+# 5. Instaliraj Composer i generiraj vendor mapu
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# 6. Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
