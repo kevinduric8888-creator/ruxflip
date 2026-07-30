@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Facade;
+
 // 1. Definiramo Kernel klasu
 namespace App\Http {
     use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -61,6 +63,9 @@ namespace {
     $app = new Illuminate\Foundation\Application(
         $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
     );
+
+    // Registracija Facade aplikacije (rješava "A facade root has not been set")
+    \Illuminate\Support\Facades\Facade::setFacadeApplication($app);
 
     $app->singleton(
         Illuminate\Contracts\Http\Kernel::class,
