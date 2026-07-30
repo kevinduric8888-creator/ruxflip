@@ -31,10 +31,12 @@ COPY . .
 # Instaliraj ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# Stvori prečac za vendor mapu jedan direktorij iznad (/var/www/vendor -> /var/www/html/vendor)
-RUN ln -s /var/www/html/vendor /var/www/vendor
+# Stvori prečace u /var/www/ za sve mape koje index.php traži izvan html foldera
+RUN ln -s /var/www/html/vendor /var/www/vendor && \
+    ln -s /var/www/html/bootstrap /var/www/bootstrap && \
+    ln -s /var/www/html/storage /var/www/storage
 
 # Postavi dozvole za www-data korisnika
-RUN chown -R www-data:www-data /var/www/html /var/www/vendor
+RUN chown -R www-data:www-data /var/www/html /var/www/vendor /var/www/bootstrap /var/www/storage
 
 EXPOSE 80
