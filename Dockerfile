@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 # Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
-# Postavi DocumentRoot na /var/www/html
+# Postavi Apache na /var/www/html
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html\n\
     <Directory /var/www/html>\n\
@@ -23,20 +23,18 @@ RUN echo '<VirtualHost *:80>\n\
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Postavi radni direktorij i kopiraj projekt
 WORKDIR /var/www/html
+
+# Kopiraj projekt
 COPY . .
 
-# Napravi symlinkove za sve glavne mape prema gore za svaki slučaj
-RUN ln -s /var/www/html /var/www/public 2>/dev/null || true
-RUN ln -s /var/www/html/vendor /var/www/vendor 2>/dev/null || true
-RUN ln -s /var/www/html/bootstrap /var/www/bootstrap 2>/dev/null || true
-RUN ln -s /var/www/html/storage /var/www/storage 2>/dev/null || true
-
-# Instaliraj ovisnosti
+# Instaliraj Composer ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
+# Kopiraj sve mape iz html u parent direktorij /var/www za index.php
+RUN cp -rn /var/www/html/* /var/www/ 2>/dev/null || true
+
 # Postavi dozvole
-RUN chown -R www-data:www-data /var/www /var/www/html
+RUN chown -R www-data:www-data /var/www
 
 EXPOSE 80
