@@ -1,19 +1,19 @@
 FROM php:8.2-apache
 
-# Instaliraj potrebne sistemske pakete i ekstenzije
+# Instaliraj sistemske pakete i ekstenzije
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
     && docker-php-ext-install zip pdo_mysql
 
-# Omogući rewrite modul za Apache
+# Omogući rewrite modul
 RUN a2enmod rewrite
 
-# Postavi Apache direktno na /var/www/html
+# Postavi DocumentRoot na /var/www/html/public
 RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html\n\
-    <Directory /var/www/html>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
         Options Indexes FollowSymLinks\n\
         AllowOverride All\n\
         Require all granted\n\
@@ -23,20 +23,19 @@ RUN echo '<VirtualHost *:80>\n\
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Kopiraj projekt u /var/www/html
 WORKDIR /var/www/html
-
-# Kopiraj sve datoteke projekta
 COPY . .
+
+# Stvori public folder i prebaci index.php i .htaccess u njega ako već nisu tamo
+RUN mkdir -p public && \
+    if [ -f index.php ]; then mv index.php public/; fi && \
+    if [ -f .htaccess ]; then cp .htaccess public/; fi
 
 # Instaliraj ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# Stvori prečace u /var/www/ za sve mape koje index.php traži izvan html foldera
-RUN ln -s /var/www/html/vendor /var/www/vendor && \
-    ln -s /var/www/html/bootstrap /var/www/bootstrap && \
-    ln -s /var/www/html/storage /var/www/storage
-
-# Postavi dozvole za www-data korisnika
-RUN chown -R www-data:www-data /var/www/html /var/www/vendor /var/www/bootstrap /var/www/storage
+# Postavi dozvole
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
