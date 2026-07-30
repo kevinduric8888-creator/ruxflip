@@ -23,13 +23,23 @@ RUN rm -rf /var/www/html/public_temp && \
     rm -rf /var/www/html/public && \
     mv /var/www/html/public_temp /var/www/html/public
 
-# 3. Generiraj univerzalan bootstrap/app.php za Laravel 8-10
-RUN mkdir -p /var/www/html/bootstrap/cache && \
-    if [ ! -f /var/www/html/bootstrap/app.php ]; then \
-        echo '<?php\n$app = new Illuminate\\Foundation\\Application(\n    $_ENV["APP_BASE_PATH"] ?? dirname(__DIR__)\n);\nif (class_exists("App\\Http\\Kernel")) {\n    $app->singleton(Illuminate\\Contracts\\Http\\Kernel::class, App\\Http\\Kernel::class);\n} else {\n    $app->singleton(Illuminate\\Contracts\\Http\\Kernel::class, Illuminate\\Foundation\\Http\\Kernel::class);\n}\nif (class_exists("App\\Console\\Kernel")) {\n    $app->singleton(Illuminate\\Contracts\\Console\\Kernel::class, App\\Console\\Kernel::class);\n}\nif (class_exists("App\\Exceptions\\Handler")) {\n    $app->singleton(Illuminate\\Contracts\\Debug\\ExceptionHandler::class, App\\Exceptions\\Handler::class);\n}\nreturn $app;' > /var/www/html/bootstrap/app.php; \
+# 3. Kreiraj sve ključne Laravel mape u slučaju da neke fale u repo-u
+RUN mkdir -p /var/www/html/app/Http \
+             /var/www/html/app/Exceptions \
+             /var/www/html/routes \
+             /var/www/html/resources/views \
+             /var/www/html/storage/framework/views \
+             /var/www/html/storage/framework/cache \
+             /var/www/html/storage/framework/sessions \
+             /var/www/html/storage/logs \
+             /var/www/html/bootstrap/cache
+
+# 4. Generiraj stabilan bootstrap/app.php s baznim Exception Handlerom
+RUN if [ ! -f /var/www/html/bootstrap/app.php ]; then \
+        echo '<?php\n$app = new Illuminate\\Foundation\\Application(\n    $_ENV["APP_BASE_PATH"] ?? dirname(__DIR__)\n);\n\nif (class_exists("App\\Http\\Kernel")) {\n    $app->singleton(Illuminate\\Contracts\\Http\\Kernel::class, App\\Http\\Kernel::class);\n} else {\n    $app->singleton(Illuminate\\Contracts\\Http\\Kernel::class, Illuminate\\Foundation\\Http\\Kernel::class);\n}\n\nif (class_exists("App\\Console\\Kernel")) {\n    $app->singleton(Illuminate\\Contracts\\Console\\Kernel::class, App\\Console\\Kernel::class);\n}\n\nif (class_exists("App\\Exceptions\\Handler")) {\n    $app->singleton(Illuminate\\Contracts\\Debug\\ExceptionHandler::class, App\\Exceptions\\Handler::class);\n} else {\n    $app->singleton(Illuminate\\Contracts\\Debug\\ExceptionHandler::class, Illuminate\\Foundation\\Exceptions\\Handler::class);\n}\n\nreturn $app;' > /var/www/html/bootstrap/app.php; \
     fi
 
-# 4. Postavi Apache DocumentRoot na public
+# 5. Postavi Apache DocumentRoot na public
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
@@ -41,11 +51,11 @@ RUN echo '<VirtualHost *:80>\n\
     CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
-# 5. Composer
+# 6. Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true
 
-# 6. Dozvole
+# 7. Dozvole
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
 
