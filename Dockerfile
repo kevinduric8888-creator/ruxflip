@@ -7,40 +7,34 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install zip pdo_mysql
 
-# Omogući rewrite modul za Apache
+# Omogući rewrite modul za Laravel rute
 RUN a2enmod rewrite
 
-# Postavi radni direktorij
+# Postavi radni direktorij na korijen projekta
 WORKDIR /var/www/html
 
 # Kopiraj cijeli projekt
 COPY . .
 
-# Ako index.php stoji u rootu, stvori public mapu i premjesti ga tamo
-RUN if [ -f /var/www/html/index.php ]; then \
-        mkdir -p /var/www/html/public && \
-        mv /var/www/html/index.php /var/www/html/public/index.php; \
-    fi
-
-# Postavi Apache DocumentRoot na public mapu
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
-
-# Dozvole pristupa za Apache
-RUN echo '<Directory /var/www/html/public>\n\
-    Options Indexes FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>' >> /etc/apache2/apache2.conf
+# Postavi Apache DocumentRoot na public folder i odobri sve dozvole
+RUN echo '<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        Options -Indexes +FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instaliraj Composer pakete
+# Instaliraj sve Composer pakete
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# Postavi vlasništvo i dozvole
+# Postavi dozvole za Apache i Laravel pohranu
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
 
