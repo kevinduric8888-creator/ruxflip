@@ -18,23 +18,26 @@ WORKDIR /var/www/html
 # 3. Kopiraj projekt
 COPY . .
 
-# 4. Kreiraj nužne mape i ručno osiguraj da vendor/autoload.php postoji da index.php ne puca
+# 4. Ako composer.json ne postoji ili je neispravan, stvorit ćemo ga
+RUN if [ ! -f composer.json ]; then \
+    echo '{"require": {"laravel/framework": "^10.0", "guzzlehttp/guzzle": "^7.2"}}' > composer.json; \
+fi
+
+# 5. Kreiraj nužne mape
 RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache \
              /var/www/html/storage/framework/sessions \
              /var/www/html/storage/logs \
-             /var/www/html/resources/views \
-             /var/www/html/vendor
+             /var/www/html/resources/views
 
-RUN echo "<?php\n// Dummy autoloader za prolaz builda\n" > /var/www/html/vendor/autoload.php
-
-# 5. Pokušaj pokrenuti composer ali ignoriraj ako se sruši
+# 6. Instaliraj Composer ovisnosti ispravno
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs || true
 
-# 6. Postavi dozvole
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# 7. Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
