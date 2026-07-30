@@ -26,11 +26,7 @@ RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/logs \
              /var/www/html/resources/views
 
-# 5. Instaliraj Composer s potpunom rekreacijom ovisnosti (ignorira nedostatak lock datoteke)
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer update --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
-
-# 6. Postavi dozvole
+# 5. Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
