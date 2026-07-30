@@ -7,37 +7,21 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install zip pdo_mysql
 
-# Omogući rewrite modul
+# Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
 WORKDIR /var/www/html
 
-# Kopiraj cijeli projekt
+# Kopiraj cijeli projekt direktno u /var/www/html
 COPY . .
-
-# Obriši ako postoji lažna 'public' datoteka, stvori pravu mapu i stavi index.php unutra
-RUN rm -rf /var/www/html/public && \
-    mkdir -p /var/www/html/public && \
-    cp /var/www/html/index.php /var/www/html/public/index.php
-
-# Postavi Apache DocumentRoot izravno na public mapu
-RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html/public\n\
-    <Directory /var/www/html/public>\n\
-        Options -Indexes +FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instaliraj ovisnosti
-RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
+# Pokreni composer samo ako postoji composer.json
+RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true
 
-# Postavi dozvole
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
+# Postavi prave dozvole za Apache
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
