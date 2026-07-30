@@ -1,37 +1,34 @@
 FROM php:8.2-apache
 
-# Instaliraj potrebne sistemske pakete i ekstenzije
+# 1. Instalacija sistemskih paketa i PHP ekstenzija za Laravel
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     libzip-dev \
-    && docker-php-ext-install zip pdo_mysql
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    && docker-php-ext-install zip pdo_mysql mbstring exif pcntl bcmath gd
 
-# Omogući rewrite modul za Apache
+# 2. Omogući mod_rewrite za Apache (potrebno za Laravel rute)
 RUN a2enmod rewrite
 
-# Postavi DocumentRoot na /var/www/html (root projekta)
-RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html\n\
-    <Directory /var/www/html>\n\
-        Options -Indexes +FollowSymLinks\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+# 3. Postavi Apache DocumentRoot na /var/www/html/public
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-available/*.conf
 
 WORKDIR /var/www/html
 
-# Kopiraj projekt
+# 4. Kopiraj projekt
 COPY . .
 
-# Instaliraj Composer ovisnosti (ako postoji composer.json)
+# 5. Instaliraj Composer ovisnosti
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN if [ -f /var/www/html/composer.json ]; then composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true; fi
+RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# Postavi dozvole
-RUN chown -R www-data:www-data /var/www/html
+# 6. Postavi ispravne dozvole za www-data (Apache korisnika)
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
