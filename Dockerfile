@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install zip pdo_mysql
 
-# Omogući rewrite modul
+# Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
 # Postavi DocumentRoot na /var/www/html/public
@@ -23,14 +23,14 @@ RUN echo '<VirtualHost *:80>\n\
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Kopiraj projekt u /var/www/html
+# Postavi radni direktorij i kopiraj projekt
 WORKDIR /var/www/html
 COPY . .
 
-# Stvori public folder i prebaci index.php i .htaccess u njega ako već nisu tamo
+# Napravi public folder i premjesti index.php i .htaccess ako postoje (bez rušenja ako ih nema)
 RUN mkdir -p public && \
-    if [ -f index.php ]; then mv index.php public/; fi && \
-    if [ -f .htaccess ]; then cp .htaccess public/; fi
+    cp -f index.php public/ 2>/dev/null || true && \
+    cp -f .htaccess public/ 2>/dev/null || true
 
 # Instaliraj ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
