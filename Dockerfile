@@ -26,9 +26,10 @@ RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/framework/sessions \
              /var/www/html/storage/logs
 
-# 6. Instalacija Composer ovisnosti
+# 6. Instalacija Composer ovisnosti i regeneracija autoload mapa
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
+RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs && \
+    composer dump-autoload -o --no-scripts
 
 # 7. Permisije za Laravel storage i cache
 RUN chown -R www-data:www-data /var/www/html && \
