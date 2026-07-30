@@ -7,16 +7,21 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install zip pdo_mysql
 
-# Omogući rewrite modul za Laravel rute
+# Omogući rewrite modul
 RUN a2enmod rewrite
 
-# Postavi radni direktorij na korijen projekta
 WORKDIR /var/www/html
 
 # Kopiraj cijeli projekt
 COPY . .
 
-# Postavi Apache DocumentRoot na public folder i odobri sve dozvole
+# Osiguraj da public mapa postoji i prebaci index.php unutra ako se nalazi u rootu
+RUN mkdir -p /var/www/html/public && \
+    if [ -f /var/www/html/index.php ] && [ ! -f /var/www/html/public/index.php ]; then \
+        cp /var/www/html/index.php /var/www/html/public/index.php; \
+    fi
+
+# Postavi Apache DocumentRoot izravno na public
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
@@ -24,17 +29,15 @@ RUN echo '<VirtualHost *:80>\n\
         AllowOverride All\n\
         Require all granted\n\
     </Directory>\n\
-    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
-    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instaliraj sve Composer pakete
+# Instaliraj ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# Postavi dozvole za Apache i Laravel pohranu
+# Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache || true
 
