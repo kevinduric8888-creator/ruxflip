@@ -15,13 +15,12 @@ WORKDIR /var/www/html
 # Kopiraj cijeli projekt
 COPY . .
 
-# Osiguraj da public mapa postoji i prebaci index.php unutra ako se nalazi u rootu
-RUN mkdir -p /var/www/html/public && \
-    if [ -f /var/www/html/index.php ] && [ ! -f /var/www/html/public/index.php ]; then \
-        cp /var/www/html/index.php /var/www/html/public/index.php; \
-    fi
+# Obriši ako postoji lažna 'public' datoteka, stvori pravu mapu i stavi index.php unutra
+RUN rm -rf /var/www/html/public && \
+    mkdir -p /var/www/html/public && \
+    cp /var/www/html/index.php /var/www/html/public/index.php
 
-# Postavi Apache DocumentRoot izravno na public
+# Postavi Apache DocumentRoot izravno na public mapu
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
