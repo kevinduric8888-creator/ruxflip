@@ -1,6 +1,6 @@
 <?php
 
-// Ručno definiramo Kernel klasu direktno u bootstrapu kako ne bismo ovisili o autoloading mapama
+// 1. Definiramo Kernel klasu
 namespace App\Http {
     use Illuminate\Foundation\Http\Kernel as HttpKernel;
     if (!class_exists('App\Http\Kernel')) {
@@ -34,6 +34,29 @@ namespace App\Http {
     }
 }
 
+// 2. Definiramo Exception Handler klasu
+namespace App\Exceptions {
+    use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+    use Throwable;
+    if (!class_exists('App\Exceptions\Handler')) {
+        class Handler extends ExceptionHandler {
+            protected $levels = [];
+            protected $dontReport = [];
+            protected $dontFlash = [
+                'current_password',
+                'password',
+                'password_confirmation',
+            ];
+            public function register(): void {
+                $this->reportable(function (Throwable $e) {
+                    //
+                });
+            }
+        }
+    }
+}
+
+// 3. Pokrećemo Laravel aplikaciju
 namespace {
     $app = new Illuminate\Foundation\Application(
         $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
