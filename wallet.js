@@ -225,13 +225,14 @@ function loadTable(type){
                         if(status == 0){
                             st = '<td class="tb-center" style="color: #F4A900;display:flex;flex-direction:column;">В процессе <a href="/wallet/cancel/withdraw/'+e.id+'" style="font-size: 14px; color: rgb(216,51,51); font-weight: 500;">Отменить</a></td>'
                         }
-                        
                         if(status == 1){
                             st = '<td class="tb-center" style="color: #2BD301;">Выполнено</td>'
                         }
-                        
                         if(status == 2){
                             st = '<td class="tb-center" style="color: #B5111E;">Отменено</td>'
+                        }
+                        if(status == 3){
+                            st = '<td class="tb-center" style="color: #7c7c8a;">Обрабатывается</td>'
                         }
                         
                         $('#withdrawsTable').append('<tr>\

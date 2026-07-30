@@ -194,6 +194,7 @@ function _getTransformOffset(e) {
         data.bets.forEach(function (info) {
             bet += '<li class="player__avatar_card">';
             bet += '<img src="'+ info.avatar +'" class="avatar__jackpot">';
+            bet += '<img src="/assets/images/ranks/'+ info.rank +'.png" class="avatar__jackpot_rank">';
             bet += '<div class="player__jackpot_bet">'+ info.sum +'</div>';
             bet += '<div class="player__jackpot_ticket">' + info.from + '-' + info.to + '</div>';
             bet += '</li>';

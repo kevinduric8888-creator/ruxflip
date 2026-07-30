@@ -78,6 +78,7 @@ $(document).ready(function() {
                         <div class="crash__bet_user_wr">\
                             <div class="crash__bet_user_image_wr">\
                                 <img src="' + bet.user.avatar + '" class="crash__bet_user_image" style="border-color: #333" alt="">\
+                                <img src="/assets/images/ranks/' + bet.user.rank + '.png" class="crash__bet_user_rank">\
                             </div>\
                             <div class="crash__bet_username_wr">\
                                 <div class="crash__bet_username">' + bet.user.username + '</div>\
@@ -132,7 +133,7 @@ $(document).ready(function() {
         } else {
             if (game_active && bet) {
                 var to_withdraw = (bet * parseFloat(res.float.toFixed(2))).toFixed(2);
-                $('.crash__play').text('Забрать ' + to_withdraw);
+                $('.crash__play').text('Забрать ' + to_withdraw + '₽');
         
                 if (res.float < 1.02) {
                     $('.crash__play').prop('disabled', true);

@@ -70,15 +70,20 @@ $(document).ready(function () {
     $(".auth__btn").click(function () {
         $(".modal__window").toggleClass("active");
     });
+    $(".tg_bonus").click(function () {
+        $(".modal_window_tg").toggleClass("active");
+    });
     $(".modal__close").click(function () {
         $(".modal__window").removeClass("active");
     });
     $(".custom-checkbox").click(function() {
         if ($('#auth__rules').is(':checked') && $('#auth__multi').is(':checked')) {
             $('.auth__social_vk').removeClass('auth__social_btn_unactive');
+            // $('.auth__social_google').removeClass('auth__social_btn_unactive');
         }
         else {
             $('.auth__social_vk').addClass('auth__social_btn_unactive');
+            // $('.auth__social_google').removeClass('auth__social_btn_unactive');
         }
     });
     $(".promo__activate_btn").click(function() {
@@ -116,5 +121,36 @@ $(document).ready(function () {
                 return noty(e.message, 'error');
             }
         });
+    });
+    $('.game__mines_coefs').kinetic({
+        cursor: 'grab',
+        decelerate: true,
+        triggerHardware: true,
+        threshold: 0,
+        y: false,
+        x: true,
+        slowdown: 0.9,
+        maxvelocity: 40,
+        throttleFPS: 60
+    });
+    $('.players__jackpot').kinetic({
+        cursor: 'grab',
+        decelerate: true,
+        triggerHardware: true,
+        threshold: 0,
+        y: false,
+        x: true,
+        slowdown: 0.9,
+        maxvelocity: 40,
+        throttleFPS: 60
+    });
+    
+    $('.login_method').click(function() {
+        $('.start_auth_modal').hide();
+        $('.login_modal_auth').show();
+    });
+    $('.register_method').click(function() {
+        $('.start_auth_modal').hide();
+        $('.register_modal_auth').css('display', 'flex');
     });
 });
