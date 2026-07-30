@@ -18,7 +18,12 @@ WORKDIR /var/www/html
 # 3. Kopiraj projekt
 COPY . .
 
-# 4. Kreiraj nužne mape ako nedostaju
+# 4. Ako composer.json ne postoji, stvorit ćemo minimalni da preživimo build
+RUN if [ ! -f composer.json ]; then \
+    echo '{"require": {"laravel/framework": "^10.0"}}' > composer.json; \
+fi
+
+# 5. Kreiraj nužne mape
 RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache \
@@ -26,7 +31,13 @@ RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/logs \
              /var/www/html/resources/views
 
-# 5. Postavi dozvole
+# 6. Instaliraj Composer i generiraj vendor mapu
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# 7. Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
