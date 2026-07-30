@@ -18,7 +18,7 @@ WORKDIR /var/www/html
 # 3. Kopiraj projekt
 COPY . .
 
-# 4. Kreiraj nužne mape i osiguraj osnovnu strukturu za Laravel
+# 4. Kreiraj nužne mape i osiguraj strukturu
 RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache \
@@ -27,15 +27,8 @@ RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/resources/views \
              /var/www/html/vendor
 
-# 5. Stvori osnovni autoloader da indeksna skripta ne baca grešku
-RUN echo "<?php\n\
-// Osnovni bypass za autoloader\n\
-spl_autoload_register(function (\$class) {\n\
-    \$file = __DIR__ . '/../app/' . str_replace('\\\\', '/', substr(\$class, 4)) . '.php';\n\
-    if (file_exists(\$file)) {\n\
-        require_once \$file;\n\
-    }\n\
-});\n" > /var/www/html/vendor/autoload.php
+# 5. Stvori ispravan autoloader bez sintaksnih grešaka
+RUN printf '<?php\n\nspl_autoload_register(function ($class) {\n    $file = __DIR__ . "/../app/" . str_replace("\\\\", "/", substr($class, 4)) . ".php";\n    if (file_exists($file)) {\n        require_once $file;\n    }\n});\n' > /var/www/html/vendor/autoload.php
 
 # 6. Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html && \
