@@ -19,17 +19,16 @@ WORKDIR /var/www/html
 COPY . .
 
 # 4. Kreiraj nužne mape
-RUN mkdir -p /var/www/html/bootstrap \
+RUN mkdir -p /var/www/html/bootstrap/cache \
              /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache \
              /var/www/html/storage/framework/sessions \
              /var/www/html/storage/logs \
-             /var/www/html/bootstrap/cache \
              /var/www/html/resources/views
 
-# 5. Instaliraj Composer ovisnosti
+# 5. Instaliraj Composer s potpunom rekreacijom ovisnosti (ignorira nedostatak lock datoteke)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true
+RUN composer update --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # 6. Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html && \
