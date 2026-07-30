@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# 1. Instalacija sistemskih pakete i PHP ekstenzija za Laravel
+# 1. Instalacija sistemskih paketa i PHP ekstenzija
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -13,27 +13,22 @@ RUN apt-get update && apt-get install -y \
 # 2. Omogući mod_rewrite za Apache
 RUN a2enmod rewrite
 
-# 3. Postavi Apache DocumentRoot na /var/www/html/public
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-available/*.conf
-
+# 3. DocumentRoot ostaje /var/www/html (jer nemas public/ folder)
 WORKDIR /var/www/html
 
 # 4. Kopiraj projekt
 COPY . .
 
-# 5. Instaliraj Composer ovisnosti
+# 5. Rješavanje require(__DIR__.'/../vendor/autoload.php'):
+# Stvaramo symlink izvan /html kako bi index.php uspio učitati autoload.php
+RUN mkdir -p /var/www/vendor && \
+    ln -s /var/www/html/vendor/autoload.php /var/www/vendor/autoload.php || true
+
+# 6. Instaliraj Composer ovisnosti
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# 6. Stvori potrebne mape ako nedostaju i postavi dozvole
-RUN mkdir -p /var/www/html/storage/framework/views \
-             /var/www/html/storage/framework/cache \
-             /var/www/html/storage/framework/sessions \
-             /var/www/html/storage/logs \
-             /var/www/html/bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# 7. Dozvole
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
