@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 # Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
-# Postavi Apache da poslužuje direktno korijenski direktorij /var/www/html
+# Postavi Apache da poslužuje izravno /var/www/html
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html\n\
     <Directory /var/www/html>\n\
@@ -33,10 +33,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Instaliraj sve Composer ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true
 
-# Napravi prečace (symlinks) za vendor i bootstrap izvan html direktorija
-# jer index.php traži '../vendor/autoload.php' i '../bootstrap/app.php'
-RUN ln -s /var/www/html/vendor /var/www/vendor || true
-RUN ln -s /var/www/html/bootstrap /var/www/bootstrap || true
+# Trik: Povezujemo roditeljski direktorij natrag na html
+# Tako da /var/www/html/../ zapravo pokaže na /var/www/html/
+RUN rm -rf /var/www/bootstrap /var/www/vendor && \
+    ln -s /var/www/html /var/www/bootstrap && \
+    ln -s /var/www/html /var/www/vendor
 
 # Postavi prave dozvole
 RUN chown -R www-data:www-data /var/www/html
