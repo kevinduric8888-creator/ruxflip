@@ -19,19 +19,22 @@ WORKDIR /var/www/html
 # 4. Kopiraj projekt
 COPY . .
 
-# 5. Stvori potrebne mape ako ne postoje
-RUN mkdir -p /var/www/html/bootstrap/cache \
+# 5. Stvori potrebne mape i prisilno generiraj Kernel.php u app/Http
+RUN mkdir -p /var/www/html/app/Http \
+             /var/www/html/bootstrap/cache \
              /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache \
              /var/www/html/storage/framework/sessions \
              /var/www/html/storage/logs
 
-# 6. Instalacija Composer ovisnosti i regeneracija autoload mapa
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs && \
-    composer dump-autoload -o --no-scripts
+RUN echo '<?php\n\namespace App\\Http;\n\use Illuminate\\Foundation\\Http\\Kernel as HttpKernel;\n\class Kernel extends HttpKernel {}\n' > /var/www/html/app/Http/Kernel.php
 
-# 7. Permisije za Laravel storage i cache
+# 6. Instalacija ovisnosti i prisilno osvježavanje Composer autoloada
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN composer install --no-dev --no-scripts --ignore-platform-reqs && \
+    composer dump-autoload --optimize --no-scripts
+
+# 7. Permisije za projekt
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
