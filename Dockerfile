@@ -10,23 +10,30 @@ RUN apt-get update && apt-get install -y \
 # Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
-# Postavi Apache da gleda u public folder
+# Postavi DocumentRoot na /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
+
+# Omogući dozvole pristupa za Apache (briše 403 Forbidden grešku)
+RUN echo '<Directory /var/www/html/public>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/apache2.conf
 
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Kopiraj projekt
+# Kopiraj sve datoteke projekta
 COPY . .
 
-# Instaliraj sve ovisnosti bez izvođenja skripti
+# Instaliraj sve ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# Postavi prave dozvole za Apache
+# Postavi dozvole za www-data korisnika
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
