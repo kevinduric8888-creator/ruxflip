@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# 1. Sistemske ekstenzije
+# 1. Instalacija sistemskih paketa i PHP ekstenzija
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     && docker-php-ext-install zip pdo_mysql mbstring exif pcntl bcmath gd
 
-# 2. Apache rewrite
+# 2. Omogući mod_rewrite za Apache
 RUN a2enmod rewrite
 
 WORKDIR /var/www/html
@@ -18,30 +18,25 @@ WORKDIR /var/www/html
 # 3. Kopiraj projekt
 COPY . .
 
-# 4. Stvori SVE potrebne Laravel mape kako sustav nikad ne bi bacio DirectoryNotFoundException
-RUN mkdir -p /var/www/html/app/Http \
-             /var/www/html/app/Exceptions \
-             /var/www/html/app/Console \
-             /var/www/html/config \
-             /var/www/html/routes \
-             /var/www/html/resources/views \
-             /var/www/html/public \
-             /var/www/html/bootstrap/cache \
-             /var/www/html/storage/framework/views \
+# 4. Kreiraj osnovne Laravel mape koje fale u repozitoriju
+RUN mkdir -p /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache \
              /var/www/html/storage/framework/sessions \
-             /var/www/html/storage/logs
+             /var/www/html/storage/logs \
+             /var/www/html/bootstrap/cache \
+             /var/www/html/resources/views
 
-# 5. Osiguraj osnovne konfiguracije i rute ako nedostaju u repozitoriju
-RUN if [ ! -f /var/www/html/config/app.php ]; then echo '<?php return ["name" => "Ruxflip", "env" => "production", "debug" => true, "url" => "http://localhost", "timezone" => "UTC", "locale" => "en", "key" => "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "cipher" => "AES-256-CBC", "providers" => \Illuminate\Support\ServiceProvider::defaultProviders()->toArray()];' > /var/www/html/config/app.php; fi && \
-    if [ ! -f /var/www/html/routes/web.php ]; then echo '<?php use Illuminate\Support\Facades\Route; Route::get("/", function () { return "Ruxflip radi!"; });' > /var/www/html/routes/web.php; fi
+# 5. Rješavanje ../ putanja za index.php koji se nalazi u rootu umjesto u public/
+RUN mkdir -p /var/www/vendor /var/www/bootstrap /var/www/storage && \
+    ln -s /var/www/html/vendor /var/www/vendor/autoload.php || true && \
+    ln -s /var/www/html/bootstrap/app.php /var/www/bootstrap/app.php || true
 
-# 6. Composer instalacija
+# 6. Instaliraj Composer ovisnosti
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --no-scripts --ignore-platform-reqs
+RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true
 
-# 7. Permisije
-RUN chown -R www-data:www-data /var/www/html && \
+# 7. Postavi dozvole
+RUN chown -R www-data:www-data /var/www/html /var/www/bootstrap /var/www/storage /var/www/vendor && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
