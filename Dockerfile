@@ -18,17 +18,20 @@ WORKDIR /var/www/html
 # 3. Kopiraj projekt
 COPY . .
 
-# 4. Kreiraj osnovne mape
-RUN mkdir -p /var/www/html/bootstrap /var/www/html/storage/framework/views /var/www/html/storage/framework/cache /var/www/html/storage/framework/sessions /var/www/html/storage/logs /var/www/html/bootstrap/cache /var/www/html/resources/views
+# 4. Kreiraj nužne mape
+RUN mkdir -p /var/www/html/bootstrap \
+             /var/www/html/storage/framework/views \
+             /var/www/html/storage/framework/cache \
+             /var/www/html/storage/framework/sessions \
+             /var/www/html/storage/logs \
+             /var/www/html/bootstrap/cache \
+             /var/www/html/resources/views
 
-# 5. Ispravno zapisivanje bootstrap/app.php datoteke
-RUN printf '<?php\n\n$app = new \\Illuminate\\Foundation\\Application(\n    $_ENV[\'APP_BASE_PATH\'] ?? dirname(__DIR__)\n);\n\n$app->singleton(\n    Illuminate\\Contracts\\Http\\Kernel::class,\n    App\\Http\\Kernel::class\n);\n\n$app->singleton(\n    Illuminate\\Contracts\\Console\\Kernel::class,\n    App\\Console\\Kernel::class\n);\n\n$app->singleton(\n    Illuminate\\Contracts\\Debug\\ExceptionHandler::class,\n    App\\Exceptions\\Handler::class\n);\n\nreturn $app;\n' > /var/www/html/bootstrap/app.php
-
-# 6. Instaliraj Composer ovisnosti
+# 5. Instaliraj Composer ovisnosti
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs || true
 
-# 7. Dozvole
+# 6. Postavi dozvole
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
