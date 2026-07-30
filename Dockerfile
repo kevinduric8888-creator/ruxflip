@@ -20,7 +20,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Pokreni composer da stvori vendor mapu
-RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs --no-scripts
 
 # Postavi dozvole za www-data korisnika
 RUN chown -R www-data:www-data /var/www/html
