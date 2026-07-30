@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install zip pdo_mysql
 
-# Instaliraj Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Omogući mod_rewrite za Apache
+RUN a2enmod rewrite
 
 # Postavi radni direktorij
 WORKDIR /var/www/html
@@ -16,13 +16,7 @@ WORKDIR /var/www/html
 # Kopiraj projekt
 COPY . .
 
-# Dozvole za spremanje
-RUN chown -R www-data:www-data /var/www/html \
-    && a2enmod rewrite
-
-# Postavi DocumentRoot na public folder
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
+# Postavi dozvole za sve datoteke
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
