@@ -23,10 +23,10 @@ RUN rm -rf /var/www/html/public_temp && \
     rm -rf /var/www/html/public && \
     mv /var/www/html/public_temp /var/www/html/public
 
-# 3. Ako fali bootstrap/app.php, stvori minimalnu bootstrap strukturu
+# 3. Postavi ispravnu Laravel 11 bootstrap strukturu ako fali app.php
 RUN mkdir -p /var/www/html/bootstrap/cache && \
     if [ ! -f /var/www/html/bootstrap/app.php ]; then \
-        echo '<?php\n$app = new Illuminate\\Foundation\\Application(\n    $_ENV["APP_BASE_PATH"] ?? dirname(__DIR__)\n);\n$app->singleton(\n    Illuminate\\Contracts\\Http\\Kernel::class,\n    App\\Http\\Kernel::class\n);\n$app->singleton(\n    Illuminate\\Contracts\\Console\\Kernel::class,\n    App\\Console\\Kernel::class\n);\n$app->singleton(\n    Illuminate\\Contracts\\Debug\\ExceptionHandler::class,\n    App\\Exceptions\\Handler::class\n);\nreturn $app;' > /var/www/html/bootstrap/app.php; \
+        echo '<?php\nuse Illuminate\\Foundation\\Application;\nuse Illuminate\\Foundation\\Configuration\\Exceptions;\nuse Illuminate\\Foundation\\Configuration\\Middleware;\n\nreturn Application::configure(basePath: dirname(__DIR__))\n    ->withRouting(\n        web: __DIR__."/../routes/web.php",\n        commands: __DIR__."/../routes/console.php",\n        health: "/up",\n    )\n    ->withMiddleware(function (Middleware $middleware) {\n        //\n    })\n    ->withExceptions(function (Exceptions $exceptions) {\n        //\n    })->create();' > /var/www/html/bootstrap/app.php; \
     fi
 
 # 4. Postavi Apache DocumentRoot na public
