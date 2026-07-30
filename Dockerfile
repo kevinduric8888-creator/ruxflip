@@ -18,8 +18,9 @@ WORKDIR /var/www/html
 # 3. Kopiraj projekt
 COPY . .
 
-# 4. Potrebni direktoriji
+# 4. Potrebni direktoriji (stvaramo i resources/views da izbjegnemo DirectoryNotFoundException)
 RUN mkdir -p /var/www/html/bootstrap/cache \
+             /var/www/html/resources/views \
              /var/www/html/storage/framework/views \
              /var/www/html/storage/framework/cache \
              /var/www/html/storage/framework/sessions \
