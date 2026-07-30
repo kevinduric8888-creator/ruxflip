@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 # Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
-# Postavi Apache direktno na /var/www/html uz pune dozvole pristupa
+# Postavi Apache direktno na /var/www/html
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html\n\
     <Directory /var/www/html>\n\
@@ -28,10 +28,13 @@ WORKDIR /var/www/html
 # Kopiraj sve datoteke projekta
 COPY . .
 
-# Instaliraj sve ovisnosti
+# Instaliraj ovisnosti
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
+# Stvori prečac za vendor mapu jedan direktorij iznad (/var/www/vendor -> /var/www/html/vendor)
+RUN ln -s /var/www/html/vendor /var/www/vendor
+
 # Postavi dozvole za www-data korisnika
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/html /var/www/vendor
 
 EXPOSE 80
