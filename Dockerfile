@@ -1,6 +1,6 @@
 FROM php:8.2-apache
 
-# 1. Instalacija sistemskih paketa i PHP ekstenzija
+# 1. Paketne ekstenzije
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -10,32 +10,42 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     && docker-php-ext-install zip pdo_mysql mbstring exif pcntl bcmath gd
 
-# 2. Omogući mod_rewrite za Apache
+# 2. Apache rewrite
 RUN a2enmod rewrite
 
 WORKDIR /var/www/html
 
-# 3. Kopiraj projekt
+# 3. Kopiraj izvore
 COPY . .
 
-# 4. Kreiraj potrebne mape u projektu ako ne postoje
-RUN mkdir -p /var/www/html/bootstrap/cache \
-             /var/www/html/storage/framework/views \
-             /var/www/html/storage/framework/cache \
-             /var/www/html/storage/framework/sessions \
-             /var/www/html/storage/logs
+# 4. Stvaranje potrebnih struktura izvan /html (jer index.php poziva /../bootstrap/app.php)
+RUN mkdir -p /var/www/bootstrap /var/www/storage/framework/views /var/www/storage/framework/cache /var/www/storage/framework/sessions /var/www/storage/logs
 
-# 5. Rješavanje ../ putanja: Povezujemo /var/www/ sa /var/www/html/
-RUN ln -s /var/www/html/vendor /var/www/vendor || true && \
-    ln -s /var/www/html/bootstrap /var/www/bootstrap || true && \
-    ln -s /var/www/html/storage /var/www/storage || true
+# 5. Generiranje bootstrap/app.php u /var/www/bootstrap/ za bootstrap učitavanje
+RUN echo '<?php\n\
+$app = new Illuminate\\Foundation\\Application(\n\
+    $_ENV["APP_BASE_PATH"] ?? dirname(__DIR__)\n\
+);\n\
+$app->singleton(\n\
+    Illuminate\\Contracts\\Http\\Kernel::class,\n\
+    App\\Http\\Kernel::class\n\
+);\n\
+$app->singleton(\n\
+    Illuminate\\Contracts\\Console\\Kernel::class,\n\
+    App\\Console\\Kernel::class\n\
+);\n\
+$app->singleton(\n\
+    Illuminate\\Contracts\\Debug\\ExceptionHandler::class,\n\
+    App\\Exceptions\\Handler::class\n\
+);\n\
+return $app;' > /var/www/bootstrap/app.php
 
-# 6. Instaliraj Composer ovisnosti
+# 6. Povezivanje vendor direktorija u /var/www/
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
+RUN cp -r /var/www/html/vendor /var/www/vendor
 
-# 7. Dozvole
-RUN chown -R www-data:www-data /var/www/html /var/www/bootstrap /var/www/storage /var/www/vendor && \
-    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# 7. Permisije
+RUN chown -R www-data:www-data /var/www
 
 EXPOSE 80
