@@ -10,18 +10,17 @@ RUN apt-get update && apt-get install -y \
 # Omogući rewrite modul za Apache
 RUN a2enmod rewrite
 
-# Postavi DocumentRoot na public mapu unutar projekta
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
-
-# Omogući sve dozvole pristupa za public mapu
-RUN echo '<Directory /var/www/html/public>\n\
-    Options -Indexes +FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>' >> /etc/apache2/apache2.conf
+# Postavi čistu Apache konfiguraciju s otvorenim dozvolama za /public
+RUN echo '<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        Options -Indexes +FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 WORKDIR /var/www/html
 
@@ -31,10 +30,10 @@ COPY . .
 # Kopiraj Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Instaliraj ovisnosti u root direktorij gdje je composer.json
+# Instaliraj sve Composer ovisnosti u korijensku mapu (stvara vendor mapu)
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
-# Postavi vlasništvo nad datotekama
+# Postavi prave dozvole nad svim datotekama
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
