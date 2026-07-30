@@ -1,8 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Facade;
-
-// 1. Definiramo Kernel klasu
 namespace App\Http {
     use Illuminate\Foundation\Http\Kernel as HttpKernel;
     if (!class_exists('App\Http\Kernel')) {
@@ -36,7 +33,6 @@ namespace App\Http {
     }
 }
 
-// 2. Definiramo Exception Handler klasu
 namespace App\Exceptions {
     use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
     use Throwable;
@@ -58,28 +54,26 @@ namespace App\Exceptions {
     }
 }
 
-// 3. Pokrećemo Laravel aplikaciju
 namespace {
-    $app = new Illuminate\Foundation\Application(
+    $app = new \Illuminate\Foundation\Application(
         $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
     );
 
-    // Registracija Facade aplikacije (rješava "A facade root has not been set")
     \Illuminate\Support\Facades\Facade::setFacadeApplication($app);
 
     $app->singleton(
-        Illuminate\Contracts\Http\Kernel::class,
-        App\Http\Kernel::class
+        \Illuminate\Contracts\Http\Kernel::class,
+        \App\Http\Kernel::class
     );
 
     $app->singleton(
-        Illuminate\Contracts\Console\Kernel::class,
-        App\Console\Kernel::class
+        \Illuminate\Contracts\Console\Kernel::class,
+        \App\Console\Kernel::class
     );
 
     $app->singleton(
-        Illuminate\Contracts\Debug\ExceptionHandler::class,
-        App\Exceptions\Handler::class
+        \Illuminate\Contracts\Debug\ExceptionHandler::class,
+        \App\Exceptions\Handler::class
     );
 
     return $app;
